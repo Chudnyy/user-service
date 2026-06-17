@@ -33,11 +33,20 @@ jobs:
       - name: Build project
         run: ./gradlew build --no-daemon --console=plain
 
+      - name: Prepare artifact filename
+        shell: bash
+        run: |
+          # Short SHA, sanitize branch name (replace / with -)
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
+          BRANCH=$(echo "$GITHUB_REF_NAME" | tr '/' '-')
+          FILE="${GITHUB_RUN_NUMBER}-${SHORT_SHA}-${BRANCH}"
+          echo "ARTIFACT_NAME=$FILE" >> $GITHUB_ENV
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports
+          name: ${{ env.ARCHIVE_NAME }}-test-report
           path: |
             build/reports/tests/test/
             build/test-results/test/
@@ -46,5 +55,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-libs
+          name: ${{ env.ARCHIVE_NAME }}
           path: build/libs/

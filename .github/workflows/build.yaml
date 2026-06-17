@@ -2,22 +2,23 @@ name: Build and Test
 
 on:
   push:
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v5
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -30,11 +31,11 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build project
-        run: ./gradlew build
+        run: ./gradlew build --no-daemon --console=plain
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v4
         with:
           name: test-reports
           path: |
@@ -43,7 +44,7 @@ jobs:
 
       - name: Upload build artifacts
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v4
         with:
           name: build-libs
           path: build/libs/

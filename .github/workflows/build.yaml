@@ -9,6 +9,8 @@ jobs:
       artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
 
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/generate-filename-prefix
         id: artifact-name-prefix
 

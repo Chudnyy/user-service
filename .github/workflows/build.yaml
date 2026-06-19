@@ -13,6 +13,7 @@ jobs:
         id: artifact-name-prefix
 
   test:
+    needs: setup
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +34,7 @@ jobs:
             build/test-results/test/
 
   build-jar:
-    needs: test
+    needs: [setup, test]
     runs-on: ubuntu-latest
 
     steps:

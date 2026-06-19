@@ -61,4 +61,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ needs.setup.outputs.artifact-name-prefix }}
-          path: artifacts/${{ eneeds.setup.outputs.artifact-name-prefix }}.jar
+          path: artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar

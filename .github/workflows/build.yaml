@@ -1,55 +1,48 @@
 name: Build and Test JAR
 
-on:
-  push:
-  pull_request:
+on: push
 
 jobs:
-  build-jar:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
+
+    steps:
+      - uses: ./.github/actions/generate-filename-prefix
+        id: artifact-name-prefix
+
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+      - uses: ./.github/actions/setup-gradle-env
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/gradle-wrapper.properties', '**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build project
-        run: ./gradlew build --no-daemon --console=plain
-
-      - name: Prepare artifact filename
-        shell: bash
-        run: |
-          # Short SHA, sanitize branch name (replace / with -)
-          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
-          BRANCH=$(echo "$GITHUB_REF_NAME" | tr '/' '-')
-          FILE="${GITHUB_RUN_NUMBER}-${SHORT_SHA}-${BRANCH}"
-          echo "ARTIFACT_NAME=$FILE" >> $GITHUB_ENV
+      - name: Run tests
+        run: ./gradlew test --no-daemon --console=plain
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}-test-report
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}-test-report
           path: |
             build/reports/tests/test/
             build/test-results/test/
+
+  build-jar:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Build project
+        run: ./gradlew build -x test --no-daemon --console=plain
 
       - name: Prepare artifact filename and copy JAR
         shell: bash
@@ -61,13 +54,11 @@ jobs:
             echo "No JAR found in build/libs"
             exit 1
           fi
-          cp "$SRC" "artifacts/${ARTIFACT_NAME}.jar"
-        env:
-          ARTIFACT_NAME: ${{ env.ARTIFACT_NAME }}
+          cp "$SRC" "artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar"
 
       - name: Upload renamed JAR artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}.jar
-          path: artifacts/${{ env.ARTIFACT_NAME }}.jar
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}
+          path: artifacts/${{ eneeds.setup.outputs.artifact-name-prefix }}.jar

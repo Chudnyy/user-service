@@ -9,6 +9,8 @@ outputs:
 runs:
   using: composite
   steps:
+    - uses: actions/checkout@v4
+
     - name: Generate artifact filename
       id: generate
       shell: bash

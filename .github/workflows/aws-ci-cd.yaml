@@ -1,0 +1,74 @@
+name: AWS CI/CD Pipeline
+env:
+  S3_BUCKET: "s3-integration-builds"
+  S3_BUILD_DIR: "Builds"
+  AWS_REGION: "eu-north-1"
+
+on: push
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/generate-filename-prefix
+        id: artifact-name-prefix
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon --console=plain
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}-test-report
+          path: |
+            build/reports/tests/test/
+            build/test-results/test/
+
+  build-jar:
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Build project
+        run: ./gradlew build -x test --no-daemon --console=plain
+
+      - name: Prepare artifact filename and copy JAR
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # pick a jar (adjust grep if needed)
+          SRC=$(ls build/libs/*.jar | grep -v '\-plain\.jar$' | head -n1)
+          if [ -z "$SRC" ]; then
+            echo "No JAR found in build/libs"
+            exit 1
+          fi
+          cp "$SRC" "artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Upload to S3
+        run: aws s3 cp artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar s3://${{ env.S3_BUCKET }}/${{ env.S3_BUILD_DIR }}/${{ needs.setup.outputs.artifact-name-prefix }}.jar

@@ -1,0 +1,161 @@
+name: AWS CI/CD Pipeline (JAR)
+env:
+  S3_BUCKET: "s3-integration-builds"
+  S3_BUILD_DIR: "Builds"
+  AWS_REGION: "eu-north-1"
+  APPLICATION_NAME: "user-service"
+  ENVIRONMENT_NAME: "user-service-env"
+
+on: push
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/generate-filename-prefix
+        id: artifact-name-prefix
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon --console=plain
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}-test-report
+          path: |
+            build/reports/tests/test/
+            build/test-results/test/
+
+  build-and-upload-to-s3:
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Build project
+        run: ./gradlew build -x test --no-daemon --console=plain
+
+      - name: Prepare artifact filename and copy JAR
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # pick a jar (adjust grep if needed)
+          SRC=$(ls build/libs/*.jar | grep -v '\-plain\.jar$' | head -n1)
+          if [ -z "$SRC" ]; then
+            echo "No JAR found in build/libs"
+            exit 1
+          fi
+          TARGET="artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar"
+          cp "$SRC" "$TARGET"
+          echo "FILE_PATH=$TARGET" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Upload to S3
+        run: aws s3 cp ${{ env.FILE_PATH }} s3://${{ env.S3_BUCKET }}/${{ env.S3_BUILD_DIR }}/
+
+  deploy-jar-to-aws-eb:
+    needs: [setup, build-and-upload-to-s3]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Create ElasticBeanstalk app version
+        run: |
+          aws elasticbeanstalk create-application-version \
+              --application-name ${{ env.APPLICATION_NAME }} \
+              --version-label "user-service-${{ needs.setup.outputs.artifact-name-prefix }}" \
+              --source-bundle S3Bucket=${{ env.S3_BUCKET }},S3Key=${{ env.S3_BUILD_DIR }}/${{ needs.setup.outputs.artifact-name-prefix }}.jar
+
+      - name: Update ElasticBeanstalk environment
+        run: |
+          aws elasticbeanstalk update-environment \
+              --environment-name ${{ env.ENVIRONMENT_NAME }} \
+              --version-label "user-service-${{ needs.setup.outputs.artifact-name-prefix }}"
+
+      - name: Wait for deployment to complete
+        id: wait-deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MAX_ATTEMPTS=30
+          ATTEMPT=0
+          POLL_INTERVAL=10
+
+          echo "⏳ Waiting for deployment to complete (max ${MAX_ATTEMPTS} attempts, polling every ${POLL_INTERVAL}s)..."
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+
+            # Get environment status
+            STATUS=$(aws elasticbeanstalk describe-environments \
+              --environment-names ${{ env.ENVIRONMENT_NAME }} \
+              --query 'Environments[0].Status' \
+              --output text)
+
+            HEALTH=$(aws elasticbeanstalk describe-environments \
+              --environment-names ${{ env.ENVIRONMENT_NAME }} \
+              --query 'Environments[0].Health' \
+              --output text)
+
+            echo "[$ATTEMPT/$MAX_ATTEMPTS] Status: $STATUS | Health: $HEALTH"
+
+            # Terminal states: Ready, Terminated, Terminating
+            if [[ "$STATUS" == "Ready" ]]; then
+              echo "✅ Deployment completed successfully!"
+              echo "DEPLOYMENT_STATUS=SUCCESS" >> $GITHUB_ENV
+              echo "status=success" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [[ "$STATUS" == "Terminated" || "$STATUS" == "Terminating" ]]; then
+              echo "❌ Environment is $STATUS"
+              echo "DEPLOYMENT_STATUS=FAILED" >> $GITHUB_ENV
+              echo "status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+
+            # Wait before next poll
+            sleep $POLL_INTERVAL
+          done
+
+          echo "❌ Deployment timed out after ${MAX_ATTEMPTS} attempts"
+          echo "DEPLOYMENT_STATUS=TIMEOUT" >> $GITHUB_ENV
+          echo "status=timeout" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Show deployment status
+        if: always()
+        run: |
+          echo "📊 Final Deployment Status: ${{ env.DEPLOYMENT_STATUS }}"
+          echo "Step output status: ${{ steps.wait-deployment.outputs.status }}"

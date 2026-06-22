@@ -3,6 +3,8 @@ env:
   S3_BUCKET: "s3-integration-builds"
   S3_BUILD_DIR: "Builds"
   AWS_REGION: "eu-north-1"
+  APPLICATION_NAME: "user-service"
+  ENVIRONMENT_NAME: "user-service-env"
 
 on: push
 
@@ -74,3 +76,28 @@ jobs:
 
       - name: Upload to S3
         run: aws s3 cp ${{ env.FILE_PATH }} s3://${{ env.S3_BUCKET }}/${{ env.S3_BUILD_DIR }}/
+
+  deploy-jar-to-aws-eb:
+    needs: build-and-upload-to-s3
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Create ElasticBeanstalk app version
+        run: |
+          aws elasticbeanstalk create-application-version \
+              --application-name ${{ env.APPLICATION_NAME }} \
+              --version-label "user-service-${{ needs.setup.outputs.artifact-name-prefix }}" \
+              --source-bundle S3Bucket=${{ env.S3_BUCKET }},S3Key=${{ env.S3_BUILD_DIR }}/${{ needs.setup.outputs.artifact-name-prefix }}.jar
+
+      - name: Update ElasticBeanstalk environment
+        run: |
+          aws elasticbeanstalk update-environment \
+              --environment-name ${{ env.ENVIRONMENT_NAME }} \
+              --version-label "user-service-${{ needs.setup.outputs.artifact-name-prefix }}"

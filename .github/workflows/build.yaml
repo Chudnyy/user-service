@@ -1,0 +1,67 @@
+name: Build and Test JAR
+
+on: push
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/generate-filename-prefix
+        id: artifact-name-prefix
+
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Run tests
+        run: ./gradlew test --no-daemon --console=plain
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}-test-report
+          path: |
+            build/reports/tests/test/
+            build/test-results/test/
+
+  build-jar:
+    needs: [setup, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-gradle-env
+
+      - name: Build project
+        run: ./gradlew build -x test --no-daemon --console=plain
+
+      - name: Prepare artifact filename and copy JAR
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          # pick a jar (adjust grep if needed)
+          SRC=$(ls build/libs/*.jar | grep -v '\-plain\.jar$' | head -n1)
+          if [ -z "$SRC" ]; then
+            echo "No JAR found in build/libs"
+            exit 1
+          fi
+          cp "$SRC" "artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar"
+
+      - name: Upload renamed JAR artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ needs.setup.outputs.artifact-name-prefix }}
+          path: artifacts/${{ needs.setup.outputs.artifact-name-prefix }}.jar

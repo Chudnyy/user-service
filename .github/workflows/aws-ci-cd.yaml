@@ -78,7 +78,7 @@ jobs:
         run: aws s3 cp ${{ env.FILE_PATH }} s3://${{ env.S3_BUCKET }}/${{ env.S3_BUILD_DIR }}/
 
   deploy-jar-to-aws-eb:
-    needs: build-and-upload-to-s3
+    needs: [setup, build-and-upload-to-s3]
     runs-on: ubuntu-latest
 
     steps:

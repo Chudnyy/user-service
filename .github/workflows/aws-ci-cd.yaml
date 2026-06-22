@@ -101,3 +101,61 @@ jobs:
           aws elasticbeanstalk update-environment \
               --environment-name ${{ env.ENVIRONMENT_NAME }} \
               --version-label "user-service-${{ needs.setup.outputs.artifact-name-prefix }}"
+
+      - name: Wait for deployment to complete
+        id: wait-deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MAX_ATTEMPTS=30
+          ATTEMPT=0
+          POLL_INTERVAL=10
+
+          echo "⏳ Waiting for deployment to complete (max ${MAX_ATTEMPTS} attempts, polling every ${POLL_INTERVAL}s)..."
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+
+            # Get environment status
+            STATUS=$(aws elasticbeanstalk describe-environments \
+              --environment-names ${{ env.ENVIRONMENT_NAME }} \
+              --query 'Environments[0].Status' \
+              --output text)
+
+            HEALTH=$(aws elasticbeanstalk describe-environments \
+              --environment-names ${{ env.ENVIRONMENT_NAME }} \
+              --query 'Environments[0].Health' \
+              --output text)
+
+            echo "[$ATTEMPT/$MAX_ATTEMPTS] Status: $STATUS | Health: $HEALTH"
+
+            # Terminal states: Ready, Terminated, Terminating
+            if [[ "$STATUS" == "Ready" ]]; then
+              echo "✅ Deployment completed successfully!"
+              echo "DEPLOYMENT_STATUS=SUCCESS" >> $GITHUB_ENV
+              echo "status=success" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            if [[ "$STATUS" == "Terminated" || "$STATUS" == "Terminating" ]]; then
+              echo "❌ Environment is $STATUS"
+              echo "DEPLOYMENT_STATUS=FAILED" >> $GITHUB_ENV
+              echo "status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+
+            # Wait before next poll
+            sleep $POLL_INTERVAL
+          done
+
+          echo "❌ Deployment timed out after ${MAX_ATTEMPTS} attempts"
+          echo "DEPLOYMENT_STATUS=TIMEOUT" >> $GITHUB_ENV
+          echo "status=timeout" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Show deployment status
+        if: always()
+        run: |
+          echo "📊 Final Deployment Status: ${{ env.DEPLOYMENT_STATUS }}"
+          echo "Step output status: ${{ steps.wait-deployment.outputs.status }}"

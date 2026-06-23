@@ -6,7 +6,7 @@ env:
   APPLICATION_NAME: "user-service"
   ENVIRONMENT_NAME: "user-service-env"
 
-on: push
+on: workflow_dispatch
 
 jobs:
   setup:

@@ -2,13 +2,6 @@ name: AWS CI/CD Docker
 
 on: push
 
-env:
-  ERC_REPOSITORY: pet/integration/user-service
-  EB_APPLICATION_NAME: user-service
-  EB_ENVIRONMENT_NAME: user-service-docker-env
-  EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
-  CONTAINER_PORT: 8080
-
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -47,7 +40,13 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      ERC_REPOSITORY: pet/integration/user-service
+      EB_APPLICATION_NAME: user-service
+      EB_ENVIRONMENT_NAME: user-service-docker-env
+      CONTAINER_PORT: 8080
+      AWS_REGION: eu-north-1
       IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
+      EB_S3_BUCKET: elasticbeanstalk-{{ env.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}
 
     steps:
       - uses: actions/checkout@v7
@@ -55,9 +54,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
 
       - name: Build Docker image
         run: |

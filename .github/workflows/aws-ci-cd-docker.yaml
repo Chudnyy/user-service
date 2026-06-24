@@ -72,11 +72,11 @@ jobs:
 
       - name: Create Dockerrun.aws.json
         run: |
-          echo "IMAGE=${{ env.IMAGE_NAME }}"
+          echo "IMAGE = ${{ env.IMAGE_NAME }}"
           echo '{
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "'${{ env.IMAGE }}'"
+              "Name": "'${{ env.IMAGE_NAME }}'"
             },
             "Ports": [
               {

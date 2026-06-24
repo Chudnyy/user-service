@@ -94,7 +94,7 @@ jobs:
       - name: Create ZIP package to S3
         run: |
           FILE_PATH=${{ env.EB_APPLICATION_NAME }}/deployment-package-${{ env.IMAGE_TAG }}.zip
-          aws s3 cp deploy.zip s3://${{ env.EB_S3_BUCKET }}/${{ FILE_PATH }}
+          aws s3 cp deploy.zip s3://${{ env.EB_S3_BUCKET }}/$FILE_PATH
           echo "s3-path=$FILE_PATH" >> $GITHUB_ENV
 
       - name: Create new application version in Elastic Beanstalk

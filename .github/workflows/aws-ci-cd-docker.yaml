@@ -46,7 +46,7 @@ jobs:
       CONTAINER_PORT: 8080
       AWS_REGION: eu-north-1
       IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
-      EB_S3_BUCKET: elasticbeanstalk-{{ env.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}
+      EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
 
     steps:
       - name: Checkout repo
@@ -76,7 +76,7 @@ jobs:
           echo '{
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "'${{ env.image }}'"
+              "Name": "'${{ env.IMAGE }}'"
             },
             "Ports": [
               {

@@ -58,18 +58,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
 
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ env.ERC_REPOSITORY }}:${{ env.IMAGE_TAG }} .
-
       - name: Log in to Amazon ECR
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Push Docker image to ECR
+      - name: BUILD and Push Docker image to ECR
         id: push-image
         run: |
           IMAGE_PATH=${{ steps.ecr-login.outputs.registry }}/${{ env.ERC_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          docker build -t $IMAGE_PATH .
           docker push $IMAGE_PATH
           echo "image=$IMAGE_PATH" >> $GITHUB_ENV
 

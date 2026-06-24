@@ -78,7 +78,7 @@ jobs:
           echo '{
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "'${{ env.IMAGE }}'"
+              "Name": "${{ env.IMAGE }}"
             },
             "Ports": [
               {
@@ -86,6 +86,7 @@ jobs:
               }
             ]
           }' > Dockerrun.aws.json
+          cat Dockerrun.aws.json
 
       - name: Create ZIP package for Elastic Beanstalk
         run: zip -r deploy.zip Dockerrun.aws.json

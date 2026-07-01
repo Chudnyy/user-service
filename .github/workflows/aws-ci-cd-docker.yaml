@@ -116,39 +116,39 @@ jobs:
 
           MAX_ATTEMPTS=30
           ATTEMPT=0
-          POLL_INTERVAL=10
+          POLL_INTERVAL=5
 
           echo "⏳ Waiting for deployment to complete (max ${MAX_ATTEMPTS} attempts, polling every ${POLL_INTERVAL}s)..."
 
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             ATTEMPT=$((ATTEMPT + 1))
 
-            # Get environment status
-            STATUS=$(aws elasticbeanstalk describe-environments \
+            # Get environment status and health
+            ENV_DATA=$(aws elasticbeanstalk describe-environments \
               --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-              --query 'Environments[0].Status' \
+              --query 'Environments[0].[Status,Health,EnvironmentHealth]' \
               --output text)
 
-            HEALTH=$(aws elasticbeanstalk describe-environments \
-              --environment-names ${{ env.EB_ENVIRONMENT_NAME }} \
-              --query 'Environments[0].Health' \
-              --output text)
+            STATUS=$(echo $ENV_DATA | awk '{print $1}')
+            HEALTH=$(echo $ENV_DATA | awk '{print $2}')
+            ENV_HEALTH=$(echo $ENV_DATA | awk '{print $3}')
 
-            echo "[$ATTEMPT/$MAX_ATTEMPTS] Status: $STATUS | Health: $HEALTH"
+            echo "[$ATTEMPT/$MAX_ATTEMPTS] Status: $STATUS | Health: $HEALTH | EnvironmentHealth: $ENV_HEALTH"
 
-            # Terminal states: Ready, Terminated, Terminating
-            if [[ "$STATUS" == "Ready" ]]; then
-              echo "✅ Deployment completed successfully!"
-              echo "DEPLOYMENT_STATUS=SUCCESS" >> $GITHUB_ENV
-              echo "status=success" >> $GITHUB_OUTPUT
-              exit 0
-            fi
-
+            # Check for failed states
             if [[ "$STATUS" == "Terminated" || "$STATUS" == "Terminating" ]]; then
               echo "❌ Environment is $STATUS"
               echo "DEPLOYMENT_STATUS=FAILED" >> $GITHUB_ENV
               echo "status=failed" >> $GITHUB_OUTPUT
               exit 1
+            fi
+
+            # Deployment successful: Ready status AND healthy environment
+            if [[ "$STATUS" == "Ready" && ("$ENV_HEALTH" == "Green" || "$ENV_HEALTH" == "Ok") ]]; then
+              echo "✅ Deployment completed successfully!"
+              echo "DEPLOYMENT_STATUS=SUCCESS" >> $GITHUB_ENV
+              echo "status=success" >> $GITHUB_OUTPUT
+              exit 0
             fi
 
             # Wait before next poll

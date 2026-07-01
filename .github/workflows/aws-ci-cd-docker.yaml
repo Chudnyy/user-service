@@ -77,7 +77,7 @@ jobs:
           echo '{
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "'$image_name'"
+              "Name": "${{ env.image_name }}" 
             },
             "Ports": [
               {

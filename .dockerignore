@@ -1,0 +1,22 @@
+# VCS and Git
+.git
+.gitignore
+.gitattributes
+.github/
+
+# IDE and editor files
+.idea/
+*.iml
+.kotlin/
+
+# Gradle caches (local machine only, not needed in Docker)
+.gradle/
+build/
+**/build/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

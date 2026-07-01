@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.servlet.client.RestTestClient
 import pet.integration.users.model.UserDto
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -12,7 +12,7 @@ internal class UserControllerTest(
     @param:Autowired private val userController: UserController,
 ) {
 
-    private val client = WebTestClient.bindToController(userController).build()
+    private val client = RestTestClient.bindToController(userController).build()
 
     @Test
     fun `should return all users`() {

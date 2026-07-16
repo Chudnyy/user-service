@@ -2,6 +2,10 @@ name: AWS CI/CD Docker
 
 on: push
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -57,9 +61,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
 
       - name: Log in to Amazon ECR
         id: ecr-login

@@ -1,6 +1,6 @@
 name: AWS CI/CD Docker
 
-on: push
+on: workflow_dispatch
 
 permissions:
   contents: read

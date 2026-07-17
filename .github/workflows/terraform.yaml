@@ -41,7 +41,9 @@ jobs:
           aws-region: eu-north-1
 
       - name: Terraform Format Check
-        run: terraform fmt -check
+        run: |
+          echo "Checking Terraform formatting in dir: $(pwd)"
+          terraform fmt -check
 
       - name: Terraform Init
         run: terraform init

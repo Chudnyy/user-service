@@ -2,22 +2,22 @@ terraform {
   required_version = ">= 1.15.0" # Ensure that the Terraform version is 1.15.0 or higher
 
   backend "s3" {
-    bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"  # S3 bucket for storing Terraform state
-    key            = "user-service/dev/terraform.tfstate"   # Path within the bucket for the state file
-    region         = "eu-north-1"                           # AWS region where the S3 bucket is located
-    encrypt        = true                                   # Enable server-side encryption for the state file
+    bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"
+    key            = "user-service/dev/terraform.tfstate"
+    region         = "eu-north-1"
+    # encrypt        = true                                                       # Enable server-side encryption for the state file
   }
 
   required_providers {
     aws = {
-      source  = "hashicorp/aws" # Specify the source of the AWS provider
-      version = "~> 5.0"        # Use a version of the AWS provider that is compatible with version
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
   }
 }
 
 provider "aws" {
-  region = "eu-north-1" # Set the AWS region to EU North (Stockholm)
+  region = "eu-north-1"
 }
 
 # ==========================================
@@ -101,13 +101,13 @@ resource "aws_elastic_beanstalk_environment" "user_service_env" {
   setting {
     namespace = "aws:elasticbeanstalk:environment"
     name      = "EnvironmentType"
-    value     = "SingleInstance" # Change to "LoadBalanced" for production scaling
+    value     = "SingleInstance"
   }
 
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
-    value     = "t3.micro" # Java/Kotlin apps need at least 2GB RAM to perform safely
+    value     = "t3.micro"
   }
 
   # Spring Application Environment Variables
@@ -120,6 +120,6 @@ resource "aws_elastic_beanstalk_environment" "user_service_env" {
   setting {
     namespace = "aws:elasticbeanstalk:application:environment"
     name      = "SERVER_PORT"
-    value     = "5000" # Elastic Beanstalk's default proxy (Nginx) expects port 5000
+    value     = "5000"
   }
 }

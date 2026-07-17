@@ -69,7 +69,7 @@ resource "aws_iam_instance_profile" "eb_ec2_profile" {
 # ==========================================
 
 resource "aws_elastic_beanstalk_application" "user_service_app" {
-  name            = "tf-user-service-app"
+  name        = "tf-user-service-app"
   description = "User Service App Managed by Terraform"
 }
 

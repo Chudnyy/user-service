@@ -42,7 +42,7 @@ jobs:
 
       - name: Terraform Format Check
         run: |
-          echo "Checking Terraform formatting... If failed check previous step for details."
+          echo "Checking Terraform formatting... If failed check below what need to be fixed"
           terraform fmt -diff -check
 
       - name: Terraform Init
@@ -92,6 +92,6 @@ jobs:
         run: exit 1
 
       # Only execute actual provisioning when code is merged into the 'main' branch
-#      - name: Terraform Apply
+      - name: Terraform Apply
 #        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-#        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false

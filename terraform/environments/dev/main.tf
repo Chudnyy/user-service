@@ -5,7 +5,6 @@ terraform {
     bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"
     key            = "user-service/dev/terraform.tfstate"
     region         = "eu-north-1"
-    # encrypt        = true                                                       # Enable server-side encryption for the state file
   }
 
   required_providers {

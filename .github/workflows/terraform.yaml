@@ -1,0 +1,95 @@
+name: Terraform - Provision Infrastructure
+
+on:
+  push:
+#    branches: [ main ]
+    paths:
+      - 'terraform/**' # Only run when Terraform files change
+#  pull_request:
+#    branches: [ main ]
+#    paths:
+#      - 'terraform/**'
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read  # Required to checkout repository
+#  pull-requests: write # Allows posting plan outputs directly on PR comments
+
+jobs:
+  terraform:
+    name: Terraform Run
+    runs-on: ubuntu-latest
+
+    # Define where your Terraform files are located inside your repository
+    defaults:
+      run:
+        working-directory: ./terraform/environments/dev
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.0 # Lock this to match your local version
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: eu-north-1
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Generates a speculative execution plan to preview infrastructure changes
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+
+      # If this is a PR, post the plan to the PR thread so you can review it before merging
+#      - name: Update Pull Request with Plan
+#        uses: actions/github-script@v7
+#        if: github.event_name == 'pull_request'
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          script: |
+#            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+#            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+#
+#            <details><summary>Show Plan Output</summary>
+#
+#            \`\`\`hcl
+#            ${{ steps.plan.outputs.stdout }}
+#            \`\`\`
+#
+#            </details>
+#
+#            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+#
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: output
+#            })
+
+      # Fail the job if the plan step failed, preventing any accidental applies
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      # Only execute actual provisioning when code is merged into the 'main' branch
+#      - name: Terraform Apply
+#        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#        run: terraform apply -auto-approve -input=false

@@ -5,7 +5,7 @@ terraform {
     bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"  # S3 bucket for storing Terraform state
     key            = "user-service/dev/terraform.tfstate"   # Path within the bucket for the state file
     region         = "eu-north-1"                           # AWS region where the S3 bucket is located
-    dynamodb_table = "tf-remote-state-locks"                # DynamoDB table for state locking and consistency
+    encrypt        = true                                   # Enable server-side encryption for the state file
   }
 
   required_providers {

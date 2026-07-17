@@ -35,7 +35,7 @@ jobs:
           terraform_version: 1.8.0 # Lock this to match your local version
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           aws-region: eu-north-1

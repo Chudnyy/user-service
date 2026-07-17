@@ -106,7 +106,7 @@ resource "aws_elastic_beanstalk_environment" "user_service_env" {
   setting {
     namespace = "aws:autoscaling:launchconfiguration"
     name      = "InstanceType"
-    value     = "t3.micro"
+    value     = "t3.nano"
   }
 
   # Spring Application Environment Variables

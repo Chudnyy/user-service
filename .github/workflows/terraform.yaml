@@ -43,7 +43,7 @@ jobs:
       - name: Terraform Format Check
         run: |
           echo "Checking Terraform formatting in dir: $(pwd)"
-          terraform fmt -check
+          terraform fmt -diff
 
       - name: Terraform Init
         run: terraform init

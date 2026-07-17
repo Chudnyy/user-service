@@ -3,8 +3,8 @@ name: Terraform - Provision Infrastructure
 on:
   push:
 #    branches: [ main ]
-    paths:
-      - 'terraform/**' # Only run when Terraform files change
+#    paths:
+#      - 'terraform/**' # Only run when Terraform files change
 #  pull_request:
 #    branches: [ main ]
 #    paths:

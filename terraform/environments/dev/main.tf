@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.15.0" # Ensure that the Terraform version is 1.15.0 or higher
+  required_version = ">= 1.15.0"
 
   backend "s3" {
     bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"

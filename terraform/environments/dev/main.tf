@@ -2,9 +2,9 @@ terraform {
   required_version = ">= 1.15.0"
 
   backend "s3" {
-    bucket         = "terraform-remote-state-bucket-339087216988-eu-north-1-an"
-    key            = "user-service/dev/terraform.tfstate"
-    region         = "eu-north-1"
+    bucket = "terraform-remote-state-bucket-339087216988-eu-north-1-an"
+    key    = "user-service/dev/terraform.tfstate"
+    region = "eu-north-1"
   }
 
   required_providers {
@@ -79,8 +79,8 @@ resource "aws_elastic_beanstalk_application" "user_service_app" {
 # ==========================================
 
 resource "aws_elastic_beanstalk_environment" "user_service_env" {
-  name                = "tf-user-service-app-dev"
-  application         = aws_elastic_beanstalk_application.user_service_app.name
+  name        = "tf-user-service-app-dev"
+  application = aws_elastic_beanstalk_application.user_service_app.name
 
   # Platform: Running Docker on AL2023 (Modern Amazon Linux 2023 stack)
   solution_stack_name = "64bit Amazon Linux 2023 v4.13.3 running Docker"

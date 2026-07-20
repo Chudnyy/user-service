@@ -4,7 +4,7 @@ terraform {
   backend "s3" {
     bucket = "terraform-remote-state-bucket-339087216988-eu-north-1-an"
     key    = "user-service/dev/terraform.tfstate"
-    region = var.aws_region
+    region = "eu-north-1"
   }
 
   required_providers {

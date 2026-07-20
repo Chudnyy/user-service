@@ -1,6 +1,6 @@
 name: Terraform - Destroy Development Environment
 
-on: workflow_dispatch
+on: push
 
 permissions:
   id-token: write # Required for AWS OIDC authentication

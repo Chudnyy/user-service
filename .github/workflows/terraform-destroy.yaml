@@ -1,0 +1,38 @@
+name: Terraform - Destroy Development Environment
+
+on: workflow_dispatch
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read  # Required to checkout repository
+
+jobs:
+  destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+
+    # Define Terraform files are located inside your repository
+    defaults:
+      run:
+        working-directory: ./terraform/environments/dev
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.15.0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: eu-north-1
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve -input=false

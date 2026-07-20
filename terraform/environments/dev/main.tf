@@ -28,7 +28,6 @@ module "elastic_beanstalk_dev" {
 
   environment_type = "dev"
   application_name = "user-service"
-  aws_region       = var.aws_region
   instance_type    = "t3.nano"
   server_port      = 5000
   spring_profile   = "dev"

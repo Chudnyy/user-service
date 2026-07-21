@@ -118,9 +118,7 @@ jobs:
           aws s3 cp deploy.zip s3://${{ env.EB_S3_BUCKET }}/$FILE_PATH
           
           echo "s3-path=$FILE_PATH" >> $GITHUB_OUTPUT
-          
 
-  # New Deploy Job
   deploy:
     needs: [setup, build, infra]
     runs-on: ubuntu-latest

@@ -1,6 +1,23 @@
 name: Terraform - Provision Infrastructure
 
-on: workflow_dispatch
+on:
+  workflow_call:
+    inputs:
+      application_name:
+        description: 'The name of the application'
+        required: true
+        type: string
+      server_port:
+        description: 'The port the service will run on'
+        required: true
+        type: number
+    outputs:
+      tf_app_name:
+        description: 'The name of the application from Terraform output'
+        value: ${{ steps.terraform.outputs.TF_APP_NAME }}
+      tf_env_name:
+        description: 'The name of the environment from Terraform output'
+        value: ${{ steps.terraform.outputs.TF_ENV_NAME }}
 #  push:
 #    branches: [ main ]
 #    paths:
@@ -94,4 +111,13 @@ jobs:
       # Only execute actual provisioning when code is merged into the 'main' branch
       - name: Terraform Apply
 #        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve -input=false
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var="application_name=${{ input.application_name }}" \
+            -var="server_port=${{ input.service_port }}"
+          
+          APP_NAME=$(terraform output -raw application_name)
+          ENV_NAME=$(terraform output -raw environment_name)
+          
+          echo "tf_app_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "tf_env_name=$ENV_NAME" >> $GITHUB_OUTPUT

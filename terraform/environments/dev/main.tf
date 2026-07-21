@@ -29,7 +29,7 @@ module "elastic_beanstalk_dev" {
   environment_type = "dev"
   application_name = "user-service"
   instance_type    = "t3.nano"
-  server_port      = 5000
+  server_port      = var.server_port
   spring_profile   = "dev"
 }
 

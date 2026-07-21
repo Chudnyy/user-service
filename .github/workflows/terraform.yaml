@@ -14,10 +14,10 @@ on:
     outputs:
       tf_app_name:
         description: 'The name of the application from Terraform output'
-        value: ${{ steps.tf_apply.outputs.TF_APP_NAME }}
+        value: ${{ jobs.terraform.outputs.tf_app_name }}
       tf_env_name:
         description: 'The name of the environment from Terraform output'
-        value: ${{ steps.tf_apply.outputs.TF_ENV_NAME }}
+        value: ${{ jobs.terraform.outputs.tf_env_name }}
 #  push:
 #    branches: [ main ]
 #    paths:

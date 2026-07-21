@@ -4,6 +4,7 @@ env:
   EB_APPLICATION_NAME: "user-service"
   EB_PORT: 8080
   EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_REGION: eu-north-1
 
 on: push
 
@@ -67,7 +68,6 @@ jobs:
 
     env:
       ERC_REPOSITORY: pet/integration/user-service
-      AWS_REGION: eu-north-1
       IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
 
     steps:

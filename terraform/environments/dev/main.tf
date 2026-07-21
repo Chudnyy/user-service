@@ -27,7 +27,7 @@ module "elastic_beanstalk_dev" {
   source = "../../modules/elastic_beanstalk"
 
   environment_type = "dev"
-  application_name = "user-service"
+  application_name = var.application_name
   instance_type    = "t3.nano"
   server_port      = var.server_port
   spring_profile   = "dev"

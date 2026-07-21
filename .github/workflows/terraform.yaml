@@ -23,7 +23,6 @@ on:
 permissions:
   id-token: write # Required for AWS OIDC authentication
   contents: read  # Required to checkout repository
-#  pull-requests: write # Allows posting plan outputs directly on PR comments
 
 jobs:
   terraform:

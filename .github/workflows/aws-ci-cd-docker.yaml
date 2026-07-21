@@ -12,6 +12,9 @@ permissions:
 
 jobs:
   infra:
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/terraform.yaml
     with:
       application_name: "user-service"

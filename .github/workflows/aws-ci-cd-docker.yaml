@@ -64,7 +64,7 @@ jobs:
 
     outputs:
         image-name: ${{ steps.build-and-push.outputs.image-name }}
-        s3-path: ${{ steps.create-s3-package.outputs.s3-path }}
+        s3-path: ${{ steps.upload-package.outputs.s3-path }}
 
     env:
       ERC_REPOSITORY: pet/integration/user-service
@@ -112,6 +112,7 @@ jobs:
         run: zip -r deploy.zip Dockerrun.aws.json
 
       - name: Upload ZIP package to S3
+        id: upload-package
         run: |
           FILE_PATH=${{ env.EB_APPLICATION_NAME }}/deployment-package-${{ env.IMAGE_TAG }}.zip
           

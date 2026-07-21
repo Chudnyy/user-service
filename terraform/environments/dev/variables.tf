@@ -17,5 +17,5 @@ variable "server_port" {
 variable "application_name" {
   description = "The name of the application"
   type        = string
-  # default     = "user-service"
+  default     = "user-service"
 }

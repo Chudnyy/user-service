@@ -61,7 +61,6 @@ jobs:
 
     env:
       ERC_REPOSITORY: pet/integration/user-service
-      CONTAINER_PORT: 8080
       AWS_REGION: eu-north-1
       IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
       EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
@@ -99,7 +98,7 @@ jobs:
             },
             "Ports": [
               {
-                "ContainerPort": "'${{ env.CONTAINER_PORT }}'"
+                "ContainerPort": "'${{ env.EB_PORT }}'"
               }
             ]
           }' > Dockerrun.aws.json

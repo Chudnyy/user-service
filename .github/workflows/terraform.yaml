@@ -2,15 +2,6 @@ name: Terraform - Provision Infrastructure
 
 on:
   workflow_call:
-    inputs:
-      application_name:
-        description: 'The name of the application'
-        required: true
-        type: string
-      server_port:
-        description: 'The port the service will run on'
-        required: true
-        type: number
     outputs:
       tf_app_name:
         description: 'The name of the application from Terraform output'
@@ -66,9 +57,7 @@ jobs:
       # Generates a speculative execution plan to preview infrastructure changes
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false \
-          -var="application_name=${{ inputs.application_name }}" \
-          -var="server_port=${{ inputs.server_port }}"
+        run: terraform plan -no-color -input=false
         continue-on-error: true
 
       # Fail the job if the plan step failed, preventing any accidental applies
@@ -80,9 +69,7 @@ jobs:
       - name: Terraform Apply
         id: tf_apply
         run: |
-          terraform apply -auto-approve -input=false \
-            -var="application_name=${{ inputs.application_name }}" \
-            -var="server_port=${{ inputs.server_port }}"
+          terraform apply -auto-approve -input=false
           
           APP_NAME=$(terraform output -raw application_name)
           ENV_NAME=$(terraform output -raw environment_name)

@@ -11,4 +11,5 @@ variable "aws_region" {
 variable "server_port" {
   description = "The port the server will run on"
   type        = number
+  default     = 5000
 }

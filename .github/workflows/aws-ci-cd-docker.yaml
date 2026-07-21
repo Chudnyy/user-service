@@ -22,6 +22,7 @@ jobs:
       server_port: 8080
 
   setup:
+    needs: infra
     runs-on: ubuntu-latest
     outputs:
       artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}

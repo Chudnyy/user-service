@@ -36,6 +36,9 @@ jobs:
   terraform:
     name: Terraform Run
     runs-on: ubuntu-latest
+    outputs:
+      tf_app_name: ${{ steps.tf_apply.outputs.tf_app_name }}
+      tf_env_name: ${{ steps.tf_apply.outputs.tf_env_name }}
 
     # Define where your Terraform files are located inside your repository
     defaults:
@@ -114,8 +117,8 @@ jobs:
 #        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           terraform apply -auto-approve -input=false \
-            -var="application_name=${{ input.application_name }}" \
-            -var="server_port=${{ input.service_port }}"
+            -var="application_name=${{ inputs.application_name }}" \
+            -var="server_port=${{ inputs.server_port }}"
           
           APP_NAME=$(terraform output -raw application_name)
           ENV_NAME=$(terraform output -raw environment_name)

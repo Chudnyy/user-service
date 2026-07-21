@@ -1,0 +1,78 @@
+name: Terraform - Provision Infrastructure
+
+on:
+  workflow_call:
+    outputs:
+      tf_app_name:
+        description: 'The name of the application from Terraform output'
+        value: ${{ jobs.terraform.outputs.tf_app_name }}
+      tf_env_name:
+        description: 'The name of the environment from Terraform output'
+        value: ${{ jobs.terraform.outputs.tf_env_name }}
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for AWS OIDC authentication
+  contents: read  # Required to checkout repository
+
+jobs:
+  terraform:
+    name: Terraform Run
+    runs-on: ubuntu-latest
+    outputs:
+      tf_app_name: ${{ steps.tf_apply.outputs.tf_app_name }}
+      tf_env_name: ${{ steps.tf_apply.outputs.tf_env_name }}
+
+    # Define where your Terraform files are located inside your repository
+    defaults:
+      run:
+        working-directory: ./terraform/environments/dev
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.15.0 # Lock this to match your local version
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
+          aws-region: eu-north-1
+
+      - name: Terraform Format Check
+        run: |
+          echo "Checking Terraform formatting... If failed check below what need to be fixed"
+          terraform fmt -diff -check
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Generates a speculative execution plan to preview infrastructure changes
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+
+      # Fail the job if the plan step failed, preventing any accidental applies
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      # Only execute actual provisioning when code is merged into the 'main' branch
+      - name: Terraform Apply
+        id: tf_apply
+        run: |
+          terraform apply -auto-approve -input=false
+          
+          APP_NAME=$(terraform output -raw application_name)
+          ENV_NAME=$(terraform output -raw environment_name)
+          
+          echo "tf_app_name=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "tf_env_name=$ENV_NAME" >> $GITHUB_OUTPUT

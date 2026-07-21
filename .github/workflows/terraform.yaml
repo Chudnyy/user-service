@@ -18,14 +18,7 @@ on:
       tf_env_name:
         description: 'The name of the environment from Terraform output'
         value: ${{ jobs.terraform.outputs.tf_env_name }}
-#  push:
-#    branches: [ main ]
-#    paths:
-#      - 'terraform/**' # Only run when Terraform files change
-#  pull_request:
-#    branches: [ main ]
-#    paths:
-#      - 'terraform/**'
+  workflow_dispatch:
 
 permissions:
   id-token: write # Required for AWS OIDC authentication

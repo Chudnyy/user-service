@@ -3,6 +3,7 @@ name: AWS CI/CD Docker
 env:
   EB_APPLICATION_NAME: "user-service"
   EB_PORT: 8080
+  EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
 
 on: push
 
@@ -68,7 +69,6 @@ jobs:
       ERC_REPOSITORY: pet/integration/user-service
       AWS_REGION: eu-north-1
       IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
-      EB_S3_BUCKET: elasticbeanstalk-eu-north-1-${{ secrets.AWS_ACCOUNT_ID }}
 
     steps:
       - name: Checkout repo
@@ -115,12 +115,16 @@ jobs:
         run: |
           FILE_PATH=${{ env.EB_APPLICATION_NAME }}/deployment-package-${{ env.IMAGE_TAG }}.zip
           aws s3 cp deploy.zip s3://${{ env.EB_S3_BUCKET }}/$FILE_PATH
-          echo "s3-path=$FILE_PATH" >> $GITHUB_ENV
+          echo "s3-path=$FILE_PATH" >> $GITHUB_OUTPUT
+          
 
   # New Deploy Job
   deploy:
-    needs: [build, infra]
+    needs: [setup, build, infra]
     runs-on: ubuntu-latest
+
+    env:
+      IMAGE_TAG: ${{ needs.setup.outputs.artifact-name-prefix }}
 
     steps:
       - name: Create new application version in Elastic Beanstalk
@@ -128,7 +132,7 @@ jobs:
           aws elasticbeanstalk create-application-version \
             --application-name ${{ needs.infra.outputs.tf_app_name }} \
             --version-label ${{ env.IMAGE_TAG }} \
-            --source-bundle S3Bucket=${{ env.EB_S3_BUCKET }},S3Key=${{ env.s3-path }}
+            --source-bundle S3Bucket=${{ env.EB_S3_BUCKET }},S3Key=${{ needs.build.outputs.s3-path }}
 
       - name: Update ElasticBeanstalk environment
         run: |

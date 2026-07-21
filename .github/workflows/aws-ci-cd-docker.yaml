@@ -24,7 +24,6 @@ jobs:
       server_port: 8080
 
   setup:
-    needs: infra
     runs-on: ubuntu-latest
     outputs:
       artifact-name-prefix: ${{ steps.artifact-name-prefix.outputs.name }}
@@ -135,6 +134,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOYMENT_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Create new application version in Elastic Beanstalk
         run: |

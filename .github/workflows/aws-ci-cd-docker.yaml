@@ -14,8 +14,8 @@ jobs:
   infra:
     uses: ./.github/workflows/terraform.yaml
     with:
-      application_name: ${{ env.EB_APPLICATION_NAME }}
-      server_port: ${{ env.EB_PORT }}
+      application_name: "user-service"
+      server_port: 8080
 
   setup:
     runs-on: ubuntu-latest

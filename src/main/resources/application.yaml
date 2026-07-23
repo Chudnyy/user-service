@@ -2,5 +2,13 @@ spring:
   application:
     name: pet-user-service
 
+  profiles:
+    default: local
+
+    group:
+      local: h2
+      ci: testcontainer
+      dev: postgres
+
 server:
   port: 8080

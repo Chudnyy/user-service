@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: {{DB_CONNECTION_URL}}
+    username: {{PI_USR_DB_USER}}
+    password: {{PI_USR_DB_PASSWORD}}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/common,classpath:db/migration/postgres
+    baseline-on-migrate: true

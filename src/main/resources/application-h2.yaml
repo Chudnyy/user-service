@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    server.port: 9092
+    url: jdbc:h2:tcp://localhost:9092/mem:userdb;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS USR\;SET SCHEMA USR
+#    url: jdbc:h2:mem:userdb;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS userdb
+    driver-class-name: org.h2.Driver
+    dialect: org.hibernate.dialect.PostgreSQLDialect
+    default-schema: USR
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      default_schema: USR
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/common,classpath:db/migration/h2
+    defaultSchema: USR

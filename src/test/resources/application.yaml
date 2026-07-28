@@ -3,11 +3,11 @@ spring:
     name: pet-user-service
 
   profiles:
-    default: local
+    default: local-test
 
     group:
-      local: h2
-      dev: postgres
+      local-test: h2-mem
+      ci-test: testcontainer
 
 server:
   port: 8080

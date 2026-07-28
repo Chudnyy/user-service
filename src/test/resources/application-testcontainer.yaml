@@ -16,8 +16,3 @@ spring:
     locations: classpath:db/migration/common,classpath:db/migration/postgres
     baseline-on-migrate: true
     default-schema: USR
-
-logging:
-  level:
-    org:
-      hibernate: DEBUG

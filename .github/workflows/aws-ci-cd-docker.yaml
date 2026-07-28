@@ -46,7 +46,7 @@ jobs:
       - uses: ./.github/actions/setup-gradle-env
 
       - name: Run tests
-        run: ./gradlew test --no-daemon --console=plain
+        run: ./gradlew test --no-daemon --console=plain --info
 
       - name: Upload test reports
         if: always()
